@@ -52,6 +52,15 @@ class Article(object):
         authors= self.article_tree.xpath('au/text()')
         if authors:
             self.authors = authors
+        else:
+            authors = self.article_tree.xpath('au_composed/text()')
+            if authors:
+                self.authors = authors;
+
+        self.ct = ''
+        section = self.article_tree.xpath('ct/text()')
+        if section:
+            self.ct = str(section[0])
         self.page_ids = []
         pi_text = self.article_tree.xpath('pi/text()')
         splitter = None
