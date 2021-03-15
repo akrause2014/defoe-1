@@ -5,12 +5,14 @@ This query is the recommended to use when there are target words.
 """
 
 from operator import add
+import os
+import sys
+import yaml
 
 from defoe import query_utils
 from defoe.papers.query_utils import preprocess_clean_article, clean_article_as_string
 from defoe.papers.query_utils import get_sentences_list_matches, get_articles_list_matches
 
-import yaml, os
 
 def do_query(issues, config_file=None, logger=None, context=None):
     """
@@ -66,13 +68,14 @@ def do_query(issues, config_file=None, logger=None, context=None):
     """
     with open(config_file, "r") as f:
         config = yaml.load(f)
-    if "os_type" in config:
-        if config["os_type"] == "linux":
-            os_type = "sys-i386-64"
-        else:
-            os_type= "sys-i386-snow-leopard"
-    else:
-            os_type = "sys-i386-64"
+
+
+    os_type = "sys-i386-64"
+    if sys.platform == 'linux':
+        os_type = "sys-i386-64"
+    elif sys.platform == 'darwin':
+        os_type= "sys-i386-snow-leopard"
+
     if "defoe_path" in config :
         defoe_path= config["defoe_path"]
     else:
