@@ -4,17 +4,20 @@ This repository contains code to analyse historical books and newspapers dataset
 
 ---
 
-This repository was forked from [the previous defoe repository](https://github.com/alan-turing-institute/defoe/), in November 2019, for adding new funcionalities to defoe to support:
- - [Text and Data Mining project, DDI Project](https://ddi.ac.uk/projects/text-and-data-mining/) - October 2019 to March 2020. 
- - [CDCS Text and Data Mining Lab](https://www.cdcs.ed.ac.uk/cdcs-text-mining-lab-call-projects?utm_campaign=2619665_CDCS%20Digest%20W%2FC%2016%20March%202020&utm_medium=email&utm_source=College%20of%20Arts%2C%20Humanities%20%26%20Social%20Sciences%2C%20The%20University%20of%20Edinburgh&dm_t=0,0,0,0,0) - March 2020 to October 2020. 
+This repository was forked from [the previous defoe repository](https://github.com/defoe-code/), in March 2021, for adding new funcionalities to defoe:
+ - [detecting and aligning similar passages in text](https://github.com/dasmiq/passim/) - March to July 2021. 
+ - additional queries, similar to [CDCS Text and Data Mining Lab](https://www.cdcs.ed.ac.uk/cdcs-text-mining-lab-call-projects?utm_campaign=2619665_CDCS%20Digest%20W%2FC%2016%20March%202020&utm_medium=email&utm_source=College%20of%20Arts%2C%20Humanities%20%26%20Social%20Sciences%2C%20The%20University%20of%20Edinburgh&dm_t=0,0,0,0,0) - March to July 2021. 
 
 Both projects have used defoe as the backend to perform several text mining queries across several digital textual historical documents (see bellow).
 
 To learn more about the outcomes of *CDCS Text and Data Mining Lab* using defoe, we recommend to check the [defoe CDCS_Text_Mining_Lab](https://github.com/defoe-code/CDCS_Text_Mining_Lab) repository. 
 
-**Note**: Since November 2019, all new defoe queries/funcionalities/support have been stored in **this** repository. 
+The latest work on defoe is supported by DDI Beacon.
 
-Developer (from November 2019): Rosa Filgueira (EPCC) 
+Developers: 
+* Rosa Filgueira from November 2019
+* Amy Krause (EPCC) from March 2021
+* Anna Roubickova (EPCC) from March 2021 
 
 ---
 ## Supported datasets
