@@ -1,5 +1,5 @@
 """
-Get concordance (also called details) of articles in which we have keywords or keysentences.
+Get concordance (also called details) of articles in which we have keywords.
 Filter those by target words and group results by year. 
 This query is the recommended to use when there are target words. 
 """
@@ -21,21 +21,10 @@ def do_query(issues, config_file=None, logger=None, context=None):
 
     config_file must be the path to a lexicon file with a list of the keywords 
     to search for, one per line.
-    
+
     Also the config_file can indicate the preprocess treatment, along with the defoe
     path, and the type of operating system. We can also configure how many target words 
     we want to use, and in which position the lexicon words starts. 
-    
-    For indicating the number of target words to use from the lexicon file, we can indicate it 
-    in the configuration file as, num_target: 1. That means, that we have only one word/sentence
-    as the target word (the first one). 
-    
-    If we want to include the target words in the lexicon, we should indicate in 
-    the configuration file as, lexicon_start: 0.
-    
-    If we do not want to include the target words (lets image that we have just one target word) 
-    in the lexicon, we should indicate in the configuration file as, lexicon_start: 1.
-    
 
     Returns result of form:
 
@@ -55,7 +44,7 @@ def do_query(issues, config_file=None, logger=None, context=None):
           <YEAR>:
           ...
         }
-        
+
 
     :param issues: RDD of defoe.papers.issue.Issue
     :type archives: pyspark.rdd.PipelinedRDD
@@ -69,7 +58,6 @@ def do_query(issues, config_file=None, logger=None, context=None):
     with open(config_file, "r") as f:
         config = yaml.load(f)
 
-
     os_type = "sys-i386-64"
     if sys.platform == 'linux':
         os_type = "sys-i386-64"
@@ -82,22 +70,18 @@ def do_query(issues, config_file=None, logger=None, context=None):
         defoe_path = "./"
 
     preprocess_type = query_utils.extract_preprocess_word_type(config)
-    data_file = query_utils.extract_data_file(config,
-                                              os.path.dirname(config_file))
-    num_target=int(config["num_target"])
-    lexicon_start= int(config["lexicon_start"])
-    keysentences = []
-    with open(data_file, 'r') as f:
-        for keysentence in f:
-            k_split = keysentence.split()
-            sentence_word = [query_utils.preprocess_word(
-                word, preprocess_type) for word in k_split]
-            sentence_norm = ' '.join(sentence_word)
-            keysentences.append(sentence_norm)
+    print(f'preprocessing: {preprocess_type}')
+
+    unproc_keywords = config['keywords']
+    keywords = []
+    for k in unproc_keywords:
+        keywords.append(' '.join(
+            [query_utils.preprocess_word(word, preprocess_type) for word in k.split()])
+        )
+    print(f'keywords: {keywords}')
+
+
     # [(year, article_string), ...]
-    
-    target_sentences = keysentences[0:num_target]
-    keysentences = keysentences[lexicon_start:]
     clean_articles = issues.flatMap(
         lambda issue: [(issue.date.year, issue, article, clean_article_as_string(
             article, defoe_path, os_type)) for article in issue.articles])
@@ -105,26 +89,20 @@ def do_query(issues, config_file=None, logger=None, context=None):
 
     # [(year, preprocess_article_string), ...]
     t_articles = clean_articles.flatMap(
-        lambda cl_article: [(cl_article[0], cl_article[1], cl_article[2],  
-                                    preprocess_clean_article(cl_article[3], preprocess_type))]) 
+        lambda cl_article: [(cl_article[0], cl_article[1], cl_article[2],
+                                    preprocess_clean_article(cl_article[3], preprocess_type))])
 
     # [(year, clean_article_string)
-    target_articles = t_articles.filter(lambda year_article: 'Reviews' in year_article[2].ct).filter(
-        lambda year_article: any(
-            target_s in year_article[3] for target_s in target_sentences))
+    filter_articles = t_articles.filter(
+        lambda year_article: any(k in year_article[3] for k in keywords))
 
-    # [(year, clean_article_string)
-    filter_articles = target_articles.filter(
-        lambda year_article: any(
-            keysentence in year_article[3] for keysentence in keysentences))
-    
     # [(year, [keysentence, keysentence]), ...]
     # Note: get_articles_list_matches ---> articles count
-    # Note: get_sentences_list_matches ---> word_count 
-     
+    # Note: get_sentences_list_matches ---> word_count
+
     matching_articles = filter_articles.map(
-        lambda year_article: (year_article[0], year_article[1], year_article[2], get_articles_list_matches(year_article[3], keysentences)))
-    
+        lambda year_article: (year_article[0], year_article[1], year_article[2], get_articles_list_matches(year_article[3], keywords)))
+
  #   matching_sentences = matching_articles.flatMap(
  #       lambda year_sentence: [(year_sentence[0], year_sentence[1], year_sentence[2], sentence)\
  #                               for sentence in year_sentence[3]])
@@ -137,19 +115,14 @@ def do_query(issues, config_file=None, logger=None, context=None):
          "authors:": sentence_data[2].authors_string,
          "page_ids": list(sentence_data[2].page_ids),
          "section": sentence_data[2].ct,
-          "term": sentence_data[3],
-          "original text": sentence_data[2].words_string,
-          "issue_id": sentence_data[1].newspaper_id,
-          "filename": sentence_data[1].filename}))
+         "term": sentence_data[3],
+         "original text": sentence_data[2].words_string,
+         "issue_id": sentence_data[1].newspaper_id,
+         "filename": sentence_data[1].filename}))
 
-    # [(date, {"title": title, ...}), ...]
-    # =>
-    
     result = matching_data \
         .groupByKey() \
         .map(lambda date_context:
              (date_context[0], list(date_context[1]))) \
         .collect()
     return result
-
-     
