@@ -1,11 +1,12 @@
+import io
 import json
 from defoe.extract_contents import extract
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class DefoeExtractTextHandler(BaseHTTPRequestHandler):
-    def _set_response(self):
-        self.send_response(200)
+    def _set_response(self, status_code=200):
+        self.send_response(status_code)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
 
@@ -19,12 +20,22 @@ class DefoeExtractTextHandler(BaseHTTPRequestHandler):
             metadata = json_data['metadata']
         else:
             metadata = {}
-        self._set_response()
-        print(f'reading {filename} using model {modelname}')
+
+        outtext = io.StringIO()
+        print(f'reading {filename} using model "{modelname}" ... ', end='', flush=True)
         for obj in extract(modelname, filename):
             obj.update(metadata)
-            outtext = json.dumps(obj) + '\n'
-            self.wfile.write(outtext.encode('utf-8'))
+            json.dump(obj, outtext)
+            outtext.write('\n')
+        val = outtext.getvalue()
+        if val:
+            print('complete')
+            self._set_response()
+            self.wfile.write(val.encode('utf-8'))
+        else:
+            print('not found')
+            self._set_response(404)
+            self.wfile.write('{"message": "Not found"}'.encode('utf-8'))
 
 
 def run(server_class=HTTPServer, handler_class=DefoeExtractTextHandler, port=8080):
