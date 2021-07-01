@@ -22,3 +22,8 @@ def filename_to_object(filename):
     except Exception as exception:
         result = (filename, str(exception))
     return result
+
+def object_as_dict(issue):
+    for article in issue:
+        if article.words:
+            yield {"id": article.article_id, "text": " ".join(article.words).replace('"', ",")}
