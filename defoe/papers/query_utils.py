@@ -10,6 +10,56 @@ from defoe.query_utils import PreprocessWordType
 import re
 
 
+def get_position(keyword, sl):
+    kl = keyword.split()
+    try:
+        first_ind = sl.index(kl[0])
+        if sl[first_ind:first_ind+len(kl)] == kl:
+            return (first_ind, first_ind+len(kl))
+    except ValueError:
+        # ignore: keyword not in sentence
+        pass
+    return None
+
+def get_positions(keyword, sentence_split, start_index=0):
+    sl = sentence_split
+    kl = keyword.split()
+    result = []
+    si = start_index
+    try:
+        while True:
+            first_ind = sl.index(kl[0], si+1)
+            if sl[first_ind:first_ind+len(kl)] == kl:
+                result.append((first_ind, first_ind+len(kl)))
+            si = first_ind
+    except ValueError:
+        # ignore: keyword not in sentence
+        pass
+    return result
+
+def within_distance(keywords, controlwords, sentence, distance):
+    split_sentence = sentence.split()
+    pos_k = {}
+    for k in keywords:
+        pk = get_positions(k, split_sentence)
+        if pk is not None:
+            pos_k[k] = pk
+    control_terms = set()
+    key_terms = set()
+    for k, pos in pos_k.items():
+        for p in pos:
+            sublist = split_sentence[p[0]-distance:p[1]+distance]
+            subsent = ' '.join(sublist)
+            for c in controlwords:
+                if c in subsent:
+                    control_terms.add(c)
+                    key_terms.add(k)
+
+    if control_terms and key_terms:
+        return [(list(control_terms), list(key_terms))]
+    return []
+
+
 def get_article_matches(issue,
                         keysentences, defoe_path, os_type,
                         preprocess_type=PreprocessWordType.LEMMATIZE):
