@@ -54,9 +54,9 @@ def do_query(hansards, config_file=None, logger=None, context=None):
                 "heading_id": discussion[1]._id,
                 "speech_id": speech._id,
                 "speaker": ((speech.speaker.id, speech.speaker.name) if speech.speaker is not None else ''),
-                "text": speech.text,                
+                "text": speech.text,
                 "filename": discussion[0].filename,
-                "term": discussion[2],
+                "term": list(discussion[2]),
             }
          )
          for speech in discussion[1].speeches
