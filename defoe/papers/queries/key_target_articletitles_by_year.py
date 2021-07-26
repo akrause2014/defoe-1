@@ -8,7 +8,6 @@ import yaml
 
 from defoe import query_utils
 from defoe.papers.query_utils import preprocess_clean_article, clean_article_as_string
-from defoe.papers.query_utils import get_sentences_list_matches, get_articles_list_matches
 
 
 def find_matches(text, keywords):
@@ -72,13 +71,13 @@ def do_query(issues, config_file=None, logger=None, context=None):
         lambda year_article: any(t in year_article[3] for t in targetwords))
 
     # [(year, [keysentence, keysentence]), ...]
-    matching_articles = filter_articles.map(
-        lambda year_article: (
+    matching_articles = filter_articles.flatMap(
+        lambda year_article: [(
             year_article[0], 
             year_article[1], 
             year_article[2], 
-            find_matches(year_article[3], keywords)
-        ))
+            k
+        ) for k in find_matches(year_article[3], keywords)])
 
     matching_data = matching_articles.map(
         lambda sentence_data:
@@ -87,8 +86,8 @@ def do_query(issues, config_file=None, logger=None, context=None):
          "article_id": sentence_data[2].article_id,
          "page_ids": list(sentence_data[2].page_ids),
          "section": sentence_data[2].ct,
-         "keywords": sentence_data[3],
-         "targets": targetwords,
+         "keyword": sentence_data[3],
+         "targets": list(targetwords),
          "issue_id": sentence_data[1].newspaper_id,
          "filename": sentence_data[1].filename}))
 
